@@ -1,0 +1,7 @@
+<launch>
+	<arg name="platform_name" default="left"/> 
+	
+	<node name="arduino_node" pkg="arduino"
+	      type="arduino_driver" required="false" respawn="true"
+	      output="screen"/>	
+</launch>

@@ -1,0 +1,14 @@
+Header header
+bool connection
+uint32 ip_addr
+uint32 t_sec
+uint32 t_usec
+uint32 age
+uint32 ntp_interval
+int32 ntp_offset
+bool ptp_active
+uint32 ptp_interval
+bool imu_active
+uint8 imu_rate
+bool gnss_active
+uint8 gnss_rate

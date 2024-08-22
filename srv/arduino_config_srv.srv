@@ -1,0 +1,3 @@
+arduino/arduino_config_msg config_msg
+---
+int8 ret

@@ -1,0 +1,9 @@
+Header header
+bool reset
+uint32 ntp_interval
+bool ptp_active
+uint32 ptp_interval
+bool imu_active
+uint8 imu_rate
+bool gnss_active
+uint8 gnss_rate
