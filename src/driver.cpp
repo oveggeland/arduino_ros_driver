@@ -1,66 +1,59 @@
-#include "ros/ros.h"
-#include <ros/package.h>
-
-#include "sensor_msgs/Imu.h"
-#include "sensor_msgs/NavSatFix.h"
-
-#include "control.h"
-#include "protocol.h"
-
-#include <iostream>
-#include <sstream>
-#include <csignal>
-
-#include <bits/stdc++.h> 
-#include <stdlib.h> 
-#include <unistd.h> 
-#include <string.h> 
-#include <sys/types.h> 
-#include <sys/socket.h> 
-#include <arpa/inet.h> 
-#include <netinet/in.h> 
-#include <fcntl.h>
-
-#define BUFFER_SIZE 1472
-#define PORT 5005
-
-using namespace std;
-
-inline void SignalHandler(int signum) {
-  ros::shutdown();
-  exit(signum);
-}
-
-
-class ArduinoDriver {
-    public:
-        ArduinoDriver(ros::NodeHandle nh);
-        ~ArduinoDriver();
-
-        void checkSocket();
-    private:
-        void parseBuffer(int buffer_size);
-        void setupSocket();
-
-        char imu_header[4] = IMU_HEADER;
-
-        ros::Publisher imu_pub;
-        ros::Publisher gnss_pub;
-        ros::Publisher status_pub;
-        ros::ServiceServer config_service;
-
-        // Socket stuff
-        int sockfd;
-        char buffer[BUFFER_SIZE]; 
-};
+#include "driver.h"
 
 void ArduinoDriver::parseBuffer(int buffer_size){
-    ROS_INFO("Received a buffer");
+    char* p_end = buffer + buffer_size;
+    char* p_frame = buffer;
+
+    while (p_frame < p_end){
+        //ROS_INFO("HEI");
+        p_frame = (char*) memchr(p_frame, '$', p_end - p_frame);
+
+        if (p_frame == nullptr){
+            break;
+        }
+
+        else if (memcmp(p_frame, imu_header, 4) == 0 && (p_end - p_frame) >= sizeof(imuPackage)){
+            imuData((imuPackage*) p_frame);
+        }
+
+        else if (memcmp(p_frame, gnss_header, 5) == 0 && (p_end - p_frame) >= sizeof(gnssPackage)){
+            gnssData((gnssPackage*) p_frame);
+        }
+
+        p_frame ++;
+    }
 }
 
-void ArduinoDriver::checkSocket(){    
-    int bytes_received = recv(sockfd, buffer, BUFFER_SIZE, 0); 
-    if (recv(sockfd, buffer, BUFFER_SIZE, 0) > 0){
+
+void ArduinoDriver::imuData(imuPackage* p_pkg){
+    sensor_msgs::Imu msg;
+    msg.header.stamp = ros::Time(p_pkg->t_sec, 1e3*p_pkg->t_usec);
+    
+    msg.linear_acceleration.x = 0.8*p_pkg->acc[0];
+    msg.linear_acceleration.y = 0.8*p_pkg->acc[1];
+    msg.linear_acceleration.z = 0.8*p_pkg->acc[2];
+
+    msg.angular_velocity.x = 0.02*p_pkg->rate[0];
+    msg.angular_velocity.y = 0.02*p_pkg->rate[1];
+    msg.angular_velocity.z = 0.02*p_pkg->rate[2];
+
+    imu_pub.publish(msg);
+}
+
+void ArduinoDriver::gnssData(gnssPackage* p_pkg){
+    sensor_msgs::NavSatFix msg;
+    msg.header.stamp = ros::Time(p_pkg->t_sec, 1e3*p_pkg->t_usec);
+    
+    msg.latitude = p_pkg->latitude;
+    msg.longitude = p_pkg->longitude;
+    msg.altitude = p_pkg->altitude;
+
+    gnss_pub.publish(msg);
+}
+
+void ArduinoDriver::checkSocket(){
+    int bytes_received; 
+    while ((bytes_received = recv(sockfd, buffer, BUFFER_SIZE, 0)) > 0){
         parseBuffer(bytes_received);
     }
 }
@@ -97,71 +90,19 @@ void ArduinoDriver::setupSocket(){
 }
 
 ArduinoDriver::ArduinoDriver(ros::NodeHandle nh){
-    ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 100);
-    ros::Publisher gnss_pub = nh.advertise<sensor_msgs::NavSatFix>("gnss", 10);
-    ros::Publisher status_pub = nh.advertise<arduino::arduino_status_msg>("status", 5);
+    imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 100);
+    gnss_pub = nh.advertise<sensor_msgs::NavSatFix>("gnss", 10);
+    status_pub = nh.advertise<arduino::arduino_status_msg>("status", 5);
 
     setupSocket();
+    setupConfig();
 }
 
 ArduinoDriver::~ArduinoDriver(){
     config_service.shutdown();
 }
 
-void sendImuMsg(imuPackage* p_imu_pkg){
-    ROS_INFO_STREAM(p_imu_pkg->acc[2]);
-}
 
-void parseBuffer(char* buffer, int bytesReceived){
-    char* p_end = buffer + bytesReceived;
-    char* p_frame = buffer;
-
-    char imu_header[4] = {'$', 'I', 'M', 'U'};
-
-    while (p_frame < p_end){
-        p_frame = (char*) memchr(p_frame, '$', p_end - p_frame);
-
-        if (p_frame == nullptr){
-            break;
-        }
-
-        else if (memcmp(p_frame, imu_header, 4) == 0 && (p_end - p_frame) > sizeof(imuPackage)){
-            sendImuMsg((imuPackage*) p_frame);
-        }
-
-        p_frame ++;
-    }
-}
-
-
-int main(int argc, char* argv[])
-{
-    // Initialise the node
-    ros::init(argc, argv, "arduino_node");
-    ros::NodeHandle nh("~");
-
-    int log_level = 0;
-    nh.getParam("/arduino_log_level", log_level);
-    if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, (ros::console::levels::Level) log_level)) {
-        ros::console::notifyLoggerLevelsChanged();
-    }
-
-    signal(SIGINT, SignalHandler);
-
-    // Initialize driver class
-    ArduinoDriver driver(nh);
-
-    // Infinite loop
-    ros::Rate rate(10); // Use a rate to avoid processor killing itself running in circles...
-    while (ros::ok){
-        // In loop, keep checking for messages
-        ROS_INFO("Looping in Arduino driver");
-
-        driver.checkSocket();
-
-        ros::spinOnce();
-        rate.sleep();
-    }
-
-    return 0;
+void ArduinoDriver::setupConfig(){
+    ROS_WARN("ArduinoDriver: Config not yet implemented");
 }
