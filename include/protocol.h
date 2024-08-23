@@ -3,6 +3,7 @@
 #define STATUS_HEADER {'$', 'S', 'T'}
 
 
+#pragma pack(1)
 typedef struct {
   char header[4];
   uint32_t t_sec;
@@ -24,16 +25,17 @@ typedef struct {
 
 typedef struct {
   char header[3];
-  uint32_t ip;
   uint32_t t_sec;
   uint32_t t_usec;
   uint32_t age;
+  uint32_t ip;
+  bool dhcp_status;
   uint32_t ntp_interval;
   int32_t ntp_offset;
   bool ptp_active;
   uint32_t ptp_interval;
   bool imu_active;
-  uint8_t imu_sr; 
+  uint8_t imu_rate; 
   bool gnss_active;
-  uint8_t gnss_sr;
+  uint8_t gnss_rate;
 } arduinoStatus;

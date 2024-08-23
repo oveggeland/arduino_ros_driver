@@ -5,7 +5,6 @@ void ArduinoDriver::parseBuffer(int buffer_size){
     char* p_frame = buffer;
 
     while (p_frame < p_end){
-        //ROS_INFO("HEI");
         p_frame = (char*) memchr(p_frame, '$', p_end - p_frame);
 
         if (p_frame == nullptr){
@@ -14,10 +13,17 @@ void ArduinoDriver::parseBuffer(int buffer_size){
 
         else if (memcmp(p_frame, imu_header, 4) == 0 && (p_end - p_frame) >= sizeof(imuPackage)){
             imuData((imuPackage*) p_frame);
+            t_last_contact = ros::Time::now();
         }
 
         else if (memcmp(p_frame, gnss_header, 5) == 0 && (p_end - p_frame) >= sizeof(gnssPackage)){
             gnssData((gnssPackage*) p_frame);
+            t_last_contact = ros::Time::now();
+        }
+
+        else if (memcmp(p_frame, status_header, 3) == 0 && (p_end - p_frame) >= sizeof(arduinoStatus)){
+            statusUpdate((arduinoStatus*) p_frame);
+            t_last_contact = ros::Time::now();
         }
 
         p_frame ++;
@@ -51,10 +57,44 @@ void ArduinoDriver::gnssData(gnssPackage* p_pkg){
     gnss_pub.publish(msg);
 }
 
+
+void ArduinoDriver::statusUpdate(arduinoStatus* p_pkg){
+    arduino::arduino_status_msg msg;
+    msg.connection = true;
+    
+    msg.t_sec = p_pkg->t_sec;
+    msg.t_usec = p_pkg->t_usec;
+    msg.age = p_pkg->age;
+
+    msg.ip_addr = p_pkg->ip;
+    msg.dhcp_status = p_pkg->dhcp_status;
+
+    msg.ntp_interval = p_pkg->ntp_interval;
+    msg.ntp_offset = p_pkg->ntp_offset;
+
+    msg.ptp_active = p_pkg->ptp_active;
+    msg.ptp_interval = p_pkg->ptp_interval;
+
+    msg.imu_active = p_pkg->imu_active;
+    msg.imu_rate = p_pkg->imu_rate;
+    msg.gnss_active = p_pkg->gnss_active;
+    msg.gnss_rate = p_pkg->gnss_rate;
+
+    status_pub.publish(msg);
+}
+
 void ArduinoDriver::checkSocket(){
     int bytes_received; 
     while ((bytes_received = recv(sockfd, buffer, BUFFER_SIZE, 0)) > 0){
         parseBuffer(bytes_received);
+    }
+}
+
+void ArduinoDriver::checkTimeout(){
+    if (ros::Time::now() - t_last_contact > CONNECTION_TIMEOUT){
+        arduino::arduino_status_msg msg;
+        status_pub.publish(msg); // Send empty status message, indicating a timeout
+        t_last_contact = ros::Time::now(); // Reset this to not overflow the network with empty status messages
     }
 }
 

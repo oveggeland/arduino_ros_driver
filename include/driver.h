@@ -21,6 +21,7 @@
 
 #define BUFFER_SIZE 1472
 #define PORT 5005
+#define CONNECTION_TIMEOUT ros::Duration(2)
 
 class ArduinoDriver {
     public:
@@ -28,6 +29,7 @@ class ArduinoDriver {
         ~ArduinoDriver();
 
         void checkSocket();
+        void checkTimeout();
     private:
         void parseBuffer(int buffer_size);
         void setupSocket();
@@ -35,7 +37,7 @@ class ArduinoDriver {
 
         void imuData(imuPackage* p_pkg);
         void gnssData(gnssPackage* p_pkg);
-        void status(arduinoStatus* p_pkg);
+        void statusUpdate(arduinoStatus* p_pkg);
 
         char imu_header[4] = IMU_HEADER;
         char gnss_header[5] = GNSS_HEADER;
@@ -44,7 +46,10 @@ class ArduinoDriver {
         ros::Publisher imu_pub;
         ros::Publisher gnss_pub;
         ros::Publisher status_pub;
+
         ros::ServiceServer config_service;
+
+        ros::Time t_last_contact;
 
         // Socket stuff
         int sockfd;

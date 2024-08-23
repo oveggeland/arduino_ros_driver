@@ -44,6 +44,7 @@ int main(int argc, char* argv[])
     while (ros::ok){
         // In loop, keep checking for messages
         driver.checkSocket();
+        driver.checkTimeout();
 
         ros::spinOnce();
         rate.sleep();

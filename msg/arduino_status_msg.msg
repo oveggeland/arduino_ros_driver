@@ -1,9 +1,10 @@
 Header header
 bool connection
-uint32 ip_addr
 uint32 t_sec
 uint32 t_usec
 uint32 age
+uint32 ip_addr
+bool dhcp_status
 uint32 ntp_interval
 int32 ntp_offset
 bool ptp_active
