@@ -1,6 +1,7 @@
 #define IMU_HEADER {'$', 'I', 'M', 'U'}
 #define GNSS_HEADER {'$', 'G', 'N', 'S', 'S'}
 #define STATUS_HEADER {'$', 'S', 'T'}
+#define CMD_HEADER  {'$', 'C', 'M', 'D'}
 
 
 #pragma pack(1)
@@ -39,3 +40,15 @@ typedef struct {
   bool gnss_active;
   uint8_t gnss_rate;
 } arduinoStatus;
+
+typedef struct {
+  char header[4] = CMD_HEADER;
+  bool reset;
+  uint32_t ntp_interval;
+  bool ptp_active;
+  uint32_t ptp_interval;
+  bool imu_active;
+  uint8_t imu_sr; 
+  bool gnss_active;
+  uint8_t gnss_sr;
+} arduinoCommand;

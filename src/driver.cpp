@@ -135,7 +135,11 @@ ArduinoDriver::ArduinoDriver(ros::NodeHandle nh){
     status_pub = nh.advertise<arduino::arduino_status_msg>("status", 5);
 
     setupSocket();
-    setupConfig();
+    
+    config_service = nh.advertiseService<
+        arduino::arduino_config_srv::Request, 
+        arduino::arduino_config_srv::Response
+        >("config", &ArduinoDriver::configService);
 }
 
 ArduinoDriver::~ArduinoDriver(){
@@ -143,6 +147,18 @@ ArduinoDriver::~ArduinoDriver(){
 }
 
 
-void ArduinoDriver::setupConfig(){
-    ROS_WARN("ArduinoDriver: Config not yet implemented");
+bool ArduinoDriver::configService(arduino::arduino_config_srv::Request &req, arduino::arduino_config_srv::Response &res){
+    arduino::arduino_config_msg msg = req.config_msg;
+    arduinoCommand cmd;
+    
+    cmd.reset = msg.reset;
+    cmd.ntp_interval = msg.ntp_interval;
+    cmd.ptp_active = msg.ptp_active;
+    cmd.ptp_interval = msg.ptp_interval;
+    cmd.imu_active = msg.imu_active;
+    cmd.imu_sr = msg.imu_rate;
+    cmd.gnss_active = msg.gnss_active;
+    cmd.gnss_sr = msg.gnss_rate;
+
+    return true;
 }

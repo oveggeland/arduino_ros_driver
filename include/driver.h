@@ -16,6 +16,8 @@
 #include "sensor_msgs/NavSatFix.h"
 
 #include "arduino/arduino_status_msg.h"
+#include "arduino/arduino_config_msg.h"
+#include "arduino/arduino_config_srv.h"
 
 #include "protocol.h"
 
@@ -31,6 +33,8 @@ class ArduinoDriver {
         void checkSocket();
         void checkTimeout();
     private:
+        static bool configService(arduino::arduino_config_srv::Request &req, arduino::arduino_config_srv::Response &res);
+
         void parseBuffer(int buffer_size);
         void setupSocket();
         void setupConfig();
