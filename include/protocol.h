@@ -23,22 +23,17 @@ typedef struct {
   int32_t altitude;
 } gnssPackage;
 
-
 typedef struct {
-  char header[3];
+  char header[3] = {'$', 'S', 'T'};
+  uint32_t ip;
   uint32_t t_sec;
   uint32_t t_usec;
-  uint32_t age;
-  uint32_t ip;
-  bool dhcp_status;
-  uint32_t ntp_interval;
-  int32_t ntp_offset;
-  bool ptp_active;
-  uint32_t ptp_interval;
-  bool imu_active;
+  uint32_t age; // Local time (arduino clock)
+  int32_t sync_offset;
+  uint16_t imu_id;
   uint8_t imu_rate; 
-  bool gnss_active;
-  uint8_t gnss_rate;
+  float imu_temp;
+  uint32_t ptp_interval;
 } arduinoStatus;
 
 typedef struct {

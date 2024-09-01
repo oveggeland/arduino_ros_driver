@@ -57,28 +57,21 @@ void ArduinoDriver::gnssData(gnssPackage* p_pkg){
     gnss_pub.publish(msg);
 }
 
-
 void ArduinoDriver::statusUpdate(arduinoStatus* p_pkg){
     arduino::arduino_status_msg msg;
-    msg.connection = true;
+    msg.header.stamp = ros::Time(p_pkg->t_sec, 1e3*p_pkg->t_usec);
     
-    msg.t_sec = p_pkg->t_sec;
-    msg.t_usec = p_pkg->t_usec;
-    msg.age = p_pkg->age;
+    msg.st_arduino_connection = true;
+    msg.st_arduino_ip_addr = p_pkg->ip;
 
-    msg.ip_addr = p_pkg->ip;
-    msg.dhcp_status = p_pkg->dhcp_status;
+    msg.st_arduino_age = p_pkg->age;
+    msg.st_arduino_sync_offset = p_pkg->sync_offset;
 
-    msg.ntp_interval = p_pkg->ntp_interval;
-    msg.ntp_offset = p_pkg->ntp_offset;
+    msg.st_arduino_imu_rate = p_pkg->imu_rate;
+    msg.st_arduino_imu_id = p_pkg->imu_id;
+    msg.st_arduino_imu_temp = p_pkg->imu_temp;
 
-    msg.ptp_active = p_pkg->ptp_active;
-    msg.ptp_interval = p_pkg->ptp_interval;
-
-    msg.imu_active = p_pkg->imu_active;
-    msg.imu_rate = p_pkg->imu_rate;
-    msg.gnss_active = p_pkg->gnss_active;
-    msg.gnss_rate = p_pkg->gnss_rate;
+    msg.st_arduino_ptp_interval = p_pkg->ptp_interval;
 
     status_pub.publish(msg);
 }
