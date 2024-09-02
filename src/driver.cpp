@@ -35,13 +35,13 @@ void ArduinoDriver::imuData(imuPackage* p_pkg){
     sensor_msgs::Imu msg;
     msg.header.stamp = ros::Time(p_pkg->t_sec, 1e3*p_pkg->t_usec);
     
-    msg.linear_acceleration.x = 0.8*p_pkg->acc[0];
-    msg.linear_acceleration.y = 0.8*p_pkg->acc[1];
-    msg.linear_acceleration.z = 0.8*p_pkg->acc[2];
+    msg.linear_acceleration.x = MG2MS2*0.8*p_pkg->acc[0];
+    msg.linear_acceleration.y = MG2MS2*0.8*p_pkg->acc[1];
+    msg.linear_acceleration.z = MG2MS2*0.8*p_pkg->acc[2];
 
-    msg.angular_velocity.x = 0.02*p_pkg->rate[0];
-    msg.angular_velocity.y = 0.02*p_pkg->rate[1];
-    msg.angular_velocity.z = 0.02*p_pkg->rate[2];
+    msg.angular_velocity.x = DEG2RAD*0.02*p_pkg->rate[0];
+    msg.angular_velocity.y = DEG2RAD*0.02*p_pkg->rate[1];
+    msg.angular_velocity.z = DEG2RAD*0.02*p_pkg->rate[2];
 
     imu_pub.publish(msg);
 }
@@ -50,9 +50,9 @@ void ArduinoDriver::gnssData(gnssPackage* p_pkg){
     sensor_msgs::NavSatFix msg;
     msg.header.stamp = ros::Time(p_pkg->t_sec, 1e3*p_pkg->t_usec);
     
-    msg.latitude = p_pkg->latitude;
-    msg.longitude = p_pkg->longitude;
-    msg.altitude = p_pkg->altitude;
+    msg.latitude = p_pkg->latitude/1.0e7;
+    msg.longitude = p_pkg->longitude/1.0e7;
+    msg.altitude = p_pkg->altitude/1000.0;
 
     gnss_pub.publish(msg);
 }

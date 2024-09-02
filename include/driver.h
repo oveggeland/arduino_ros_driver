@@ -11,6 +11,7 @@
 #include <arpa/inet.h> 
 #include <netinet/in.h> 
 #include <fcntl.h>
+#include <math.h>
 
 #include "sensor_msgs/Imu.h"
 #include "sensor_msgs/NavSatFix.h"
@@ -24,6 +25,9 @@
 #define BUFFER_SIZE 1472
 #define PORT 5005
 #define CONNECTION_TIMEOUT ros::Duration(2)
+
+#define DEG2RAD (M_PI / 180)
+#define MG2MS2 (9.81 / 1000.0)
 
 class ArduinoDriver {
     public:
