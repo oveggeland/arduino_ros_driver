@@ -71,6 +71,9 @@ void ArduinoDriver::statusUpdate(arduinoStatus* p_pkg){
     msg.st_arduino_imu_id = p_pkg->imu_id;
     msg.st_arduino_imu_temp = p_pkg->imu_temp;
 
+    msg.st_arduino_gnss_reset = p_pkg->gnss_reset;
+    msg.st_arduino_gnss_reset_cnt = p_pkg->gnss_reset_cnt;
+
     msg.st_arduino_ptp_interval = p_pkg->ptp_interval;
 
     status_pub.publish(msg);

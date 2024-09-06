@@ -6,4 +6,6 @@ uint32 st_arduino_ip_addr
 uint8 st_arduino_imu_rate
 uint16 st_arduino_imu_id
 float32 st_arduino_imu_temp
+bool st_arduino_gnss_reset
+uint16 st_arduino_gnss_reset_cnt
 uint32 st_arduino_ptp_interval
